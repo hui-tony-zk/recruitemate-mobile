@@ -66,8 +66,13 @@ const MicrophoneDialog: React.FC<MicrophoneDialogProps> = () => {
       <Dialog open={open} onClose={handleClose}>
         <DialogContent>
           <FormControl fullWidth>
-            <InputLabel>Microphone</InputLabel>
-            <Select value={selectedDeviceId} onChange={selectDevice}>
+            <InputLabel id="mic-input-label">Microphone</InputLabel>
+            <Select 
+              labelId='mic-input-label' 
+              value={selectedDeviceId} 
+              label="Select an input device" 
+              onChange={selectDevice}
+            >
               {devices &&
                 devices.map((device) => (
                   <MenuItem key={device.deviceId} value={device.deviceId}>

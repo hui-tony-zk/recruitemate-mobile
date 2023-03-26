@@ -94,17 +94,16 @@ const RecordAudio: React.FC<RecordAudioProps> = ({ deviceId }) => {
     };
 
     return (
-        <Box>
+        <Box alignContent="center">
             {!recording ? (
                 <Button onClick={handleStartRecording} disabled={recording}>
-                    Start Recording
+                    <AudioDot volume={audioVolume / 255} />
                 </Button>
             ) : (
                 <Button onClick={handleStopRecording} disabled={!recording}>
-                    Stop Recording
+                    <AudioDot volume={audioVolume / 255} />
                 </Button>
             )}
-            <AudioDot volume={audioVolume / 255} />
             {audioURL && (
                 <audio controls>
                     <source src={audioURL} type="audio/ogg" />
