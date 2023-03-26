@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import AudioDot from './AudioDot';
 import { Box, Button } from '@mui/material';
 
-interface TestMicrophoneProps {
-    mediaRecorder: MediaRecorder;
+interface RecordAudioProps {
+    deviceId: string;
 }
 
-const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
+const RecordAudio: React.FC<RecordAudioProps> = ({ deviceId }) => {
+    const [stream, setStream] = useState<MediaStream | null>(null);
+    const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [recording, setRecording] = useState<boolean>(false);
     const [audioVolume, setAudioVolume] = useState<number>(0);
     const [audioURL, setAudioURL] = useState<string>("");
@@ -14,7 +16,18 @@ const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
     const recordingRef = useRef<boolean>(false);
     const audioChunks = useRef<Blob[]>([]);
 
+    const createMediaDevice = async (deviceId: string) => {
+        const constraints = { audio: { deviceId: deviceId } };
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        const testDevice = new MediaRecorder(mediaStream);
+        setMediaRecorder(testDevice);
+        setStream(mediaStream);
+        return testDevice;
+    };
+
     useEffect(() => {
+        if (!mediaRecorder) return;
+
         const handleDataAvailable = (event: BlobEvent) => {
             if (event.data.size > 0) {
                 audioChunks.current.push(event.data);
@@ -29,15 +42,17 @@ const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
     }, [mediaRecorder]);
 
     const handleStartRecording = async () => {
+        const recordingDevice = await createMediaDevice(deviceId);
+
         setRecording(true);
         recordingRef.current = true;
         audioChunks.current = []; // Clear the audioChunks ref
         setAudioURL('');
-        mediaRecorder.start(500); // Set timeslice to 100ms for dataavailable event to fire
+        recordingDevice.start(500); // Set timeslice to 100ms for dataavailable event to fire
 
         const newAudioContext = new AudioContext();
         setAudioContext(newAudioContext);
-        const stream = mediaRecorder.stream;
+        const stream = recordingDevice.stream;
         const source = newAudioContext.createMediaStreamSource(stream);
         const analyser = newAudioContext.createAnalyser();
         source.connect(analyser);
@@ -58,11 +73,17 @@ const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
     };
 
     const handleStopRecording = () => {
+        if (!mediaRecorder) return;
+
         setRecording(false);
         recordingRef.current = false;
         setAudioVolume(0);
         mediaRecorder.stop();
         audioContext && audioContext.close();
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            setStream(null);
+        }
         replayAudio();
     };
 
@@ -93,4 +114,4 @@ const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
     );
 };
 
-export default TestMicrophone;
+export default RecordAudio;

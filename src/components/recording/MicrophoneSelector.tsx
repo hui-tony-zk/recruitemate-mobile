@@ -10,7 +10,7 @@ import {
   MenuItem,
   Select,
 } from '@mui/material';
-import TestMicrophone from './TestMicrophone';
+import RecordAudio from './RecordAudio';
 import { SelectChangeEvent } from '@mui/material';
 
 interface Device {
@@ -58,8 +58,6 @@ const MicrophoneDialog: React.FC<MicrophoneDialogProps> = () => {
   const selectDevice = async (event: SelectChangeEvent) => {
     const deviceId = event.target.value as string;
     setSelectedDeviceId(deviceId);
-    const testDevice = await createMediaDevice(deviceId);
-    setMediaRecorder(testDevice);
   };
 
   return (
@@ -78,7 +76,7 @@ const MicrophoneDialog: React.FC<MicrophoneDialogProps> = () => {
                 ))}
             </Select>
           </FormControl>
-          {mediaRecorder && <TestMicrophone mediaRecorder={mediaRecorder} />}
+          {selectedDeviceId && <RecordAudio deviceId={selectedDeviceId} />}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Close</Button>
@@ -90,9 +88,3 @@ const MicrophoneDialog: React.FC<MicrophoneDialogProps> = () => {
 
 export default MicrophoneDialog;
 
-async function createMediaDevice(deviceId: string) {
-  const constraints = { audio: { deviceId: deviceId } };
-  const stream = await navigator.mediaDevices.getUserMedia(constraints);
-  const testDevice = new MediaRecorder(stream);
-  return testDevice;
-}
