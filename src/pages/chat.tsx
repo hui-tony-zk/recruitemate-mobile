@@ -7,7 +7,6 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import IconButton from '@mui/material/IconButton'
 import MicIcon from '@mui/icons-material/Mic';
 
-import TranscribeAudio from '@/components/recording/sampleIntegrationONLY'
 import MicrophoneSelector from '@/components/recording/MicrophoneSelector'
 
 const AI_DISPLAY_NAME = 'Interviewer'
