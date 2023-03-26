@@ -1,5 +1,5 @@
 import { AppProps } from 'next/app';
-import SimpleBottomNavigation from '@/navigation/SimpleBottomNavigation';
+import SimpleBottomNavigation from '@/components/navigation/SimpleBottomNavigation';
 import { Box } from '@mui/material';
 import React from 'react'
 

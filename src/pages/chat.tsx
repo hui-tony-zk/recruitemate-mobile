@@ -1,15 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react'
 import LoadingDots from '@/components/ui/LoadingDots';
-import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import RefreshIcon from '@mui/icons-material/Refresh';
-import Container from '@mui/material/Container'
-import Paper from '@mui/material/Paper';
-
 import IconButton from '@mui/material/IconButton'
 import MicIcon from '@mui/icons-material/Mic';
+
+import TranscribeAudio from '@/components/recording/recordHandler'
+import MicrophoneSelector from '@/components/recording/MicrophoneSelector'
 
 const AI_DISPLAY_NAME = 'Interviewer'
 const MESSAGE_INITIAL_STATE = [{
@@ -90,11 +89,12 @@ const MessagePage = () => {
             </Box>
             <Box>
                 <Box display="flex" alignItems="center">
-                    <TextField
+                    {/* <TextField
                         label="Type your message"
                         value={input}
                         onChange={handleInputChange}
-                    />
+                    /> */}
+                    <MicrophoneSelector/>
                     <IconButton onClick={() => sendMessage()} color='primary'>
                         <MicIcon />
                     </IconButton>
@@ -104,6 +104,7 @@ const MessagePage = () => {
                         </IconButton>
                     )}
                 </Box>
+                <p id="status">Connection status will go here</p>
             </Box>
         </Box>
     );
