@@ -1,70 +1,78 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AudioDot from './AudioDot';
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
+import { Box, Button } from '@mui/material';
 
-interface Props {
-    mediaRecorder: MediaRecorder | null;
+interface TestMicrophoneProps {
+    mediaRecorder: MediaRecorder;
 }
 
-const TestMicrophone: React.FC<Props> = ({ mediaRecorder }) => {
+const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
     const [recording, setRecording] = useState<boolean>(false);
-    const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
-    const [audioURL, setAudioURL] = useState<string>("");
     const [audioVolume, setAudioVolume] = useState<number>(0);
+    const [audioURL, setAudioURL] = useState<string>("");
+    const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+    const recordingRef = useRef<boolean>(false);
+    const audioChunks = useRef<Blob[]>([]);
 
-    const handleStartRecording = () => {
-        navigator.mediaDevices
-            .getUserMedia({ audio: true })
-            .then((stream: MediaStream) => {
-                mediaRecorder?.start();
+    useEffect(() => {
+        const handleDataAvailable = (event: BlobEvent) => {
+            if (event.data.size > 0) {
+                audioChunks.current.push(event.data);
+            }
+        };
 
-                mediaRecorder?.addEventListener("dataavailable", (event: BlobEvent) => {
-                    const { data } = event;
-                    setAudioChunks((prevChunks: Blob[]) => [...prevChunks, data]);
-                });
+        mediaRecorder.addEventListener('dataavailable', handleDataAvailable);
 
-                mediaRecorder?.addEventListener("stop", () => {
-                    const audioBlob = new Blob(audioChunks);
-                    const audioURL = URL.createObjectURL(audioBlob);
-                    setAudioURL(audioURL);
-                });
+        return () => {
+            mediaRecorder.removeEventListener('dataavailable', handleDataAvailable);
+        };
+    }, [mediaRecorder]);
 
-                setRecording(true);
-                handleVolume(stream);
-            })
-            .catch((error: Error) => {
-                console.error(error);
-            });
+    const handleStartRecording = async () => {
+        setRecording(true);
+        recordingRef.current = true;
+        audioChunks.current = []; // Clear the audioChunks ref
+        setAudioURL('');
+        mediaRecorder.start(500); // Set timeslice to 100ms for dataavailable event to fire
+
+        const newAudioContext = new AudioContext();
+        setAudioContext(newAudioContext);
+        const stream = mediaRecorder.stream;
+        const source = newAudioContext.createMediaStreamSource(stream);
+        const analyser = newAudioContext.createAnalyser();
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        const updateAudioVolume = () => {
+            if (!recordingRef.current) return;
+
+            analyser.getByteFrequencyData(dataArray);
+            const maxVolume = Math.max(...dataArray);
+            setAudioVolume(maxVolume);
+
+            requestAnimationFrame(updateAudioVolume);
+        };
+
+        updateAudioVolume();
     };
 
     const handleStopRecording = () => {
-        recording && mediaRecorder?.stop();
         setRecording(false);
+        recordingRef.current = false;
+        setAudioVolume(0);
+        mediaRecorder.stop();
+        if (audioContext) {
+            audioContext.close();
+        }
+        replayAudio();
     };
 
-    const handleVolume = (stream: MediaStream) => {
-        const audioContext = new AudioContext();
-        const source = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        source.connect(analyser);
-        analyser.fftSize = 32;
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        const draw = () => {
-            requestAnimationFrame(draw);
-            analyser.getByteFrequencyData(dataArray);
-            const average = dataArray.reduce((a, b) => a + b) / bufferLength;
-            setAudioVolume(average);
-        };
-        draw();
+    const replayAudio = () => {
+        const audioBlob = new Blob(audioChunks.current);
+        const audioURL = URL.createObjectURL(audioBlob);
+        setAudioURL(audioURL);
     };
-
-    const dotSize = recording ? Math.min(5 + audioVolume / 255 * 15, 20) : 5;
-
-    if (!mediaRecorder) {
-        return null;
-    }
 
     return (
         <Box>
@@ -77,7 +85,7 @@ const TestMicrophone: React.FC<Props> = ({ mediaRecorder }) => {
                     Stop Recording
                 </Button>
             )}
-            <AudioDot size={dotSize} />
+            <AudioDot volume={audioVolume / 255} />
             {audioURL && (
                 <audio controls>
                     <source src={audioURL} type="audio/ogg" />

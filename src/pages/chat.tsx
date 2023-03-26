@@ -7,7 +7,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import IconButton from '@mui/material/IconButton'
 import MicIcon from '@mui/icons-material/Mic';
 
-import TranscribeAudio from '@/components/recording/recordHandler'
+import TranscribeAudio from '@/components/recording/sampleIntegrationONLY'
 import MicrophoneSelector from '@/components/recording/MicrophoneSelector'
 
 const AI_DISPLAY_NAME = 'Interviewer'
@@ -15,7 +15,6 @@ const MESSAGE_INITIAL_STATE = [{
     text: 'How would you improve the experience of dissatisfied customers?', author: AI_DISPLAY_NAME
 }]
 const MessagePage = () => {
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const [messages, setMessages] = useState(MESSAGE_INITIAL_STATE);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -89,11 +88,11 @@ const MessagePage = () => {
             </Box>
             <Box>
                 <Box display="flex" alignItems="center">
-                    {/* <TextField
+                    <TextField
                         label="Type your message"
                         value={input}
                         onChange={handleInputChange}
-                    /> */}
+                    />
                     <MicrophoneSelector/>
                     <IconButton onClick={() => sendMessage()} color='primary'>
                         <MicIcon />

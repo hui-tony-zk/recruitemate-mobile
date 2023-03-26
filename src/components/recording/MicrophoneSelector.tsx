@@ -19,7 +19,7 @@ interface Device {
   label: string;
 }
 
-interface MicrophoneDialogProps {}
+interface MicrophoneDialogProps { }
 
 const MicrophoneDialog: React.FC<MicrophoneDialogProps> = () => {
   const [open, setOpen] = useState<boolean>(false);
@@ -27,25 +27,29 @@ const MicrophoneDialog: React.FC<MicrophoneDialogProps> = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
-  useEffect(() => {
-    if (!navigator.mediaDevices) {
-      alert('MediaDevices are not supported on this browser');
-      return;
-    }
-    const getDevices = async () => {
+  const getDevices = async () => {
+    try {
+      // Request microphone permission by calling getUserMedia
+      const permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      permissionStream.getTracks().forEach((track) => track.stop()); // Stop the stream to release the microphone
+  
       const devices = await navigator.mediaDevices.enumerateDevices();
       const audioDevices = devices.filter((device) => device.kind === 'audioinput');
       console.log(audioDevices);
       setDevices(audioDevices);
-      const defaultDevice = audioDevices[0].deviceId;
-      setSelectedDeviceId(defaultDevice);
-      const testDevice = await createMediaDevice(defaultDevice);
-      setMediaRecorder(testDevice);
-    };
-    getDevices();
-  }, []);
+    } catch (error) {
+      console.error('Error getting microphone permission:', error);
+    }
+  };
+  const handleOpen = () => {
 
-  const handleOpen = () => setOpen(true);
+    if (!navigator.mediaDevices) {
+      alert('MediaDevices are not supported on this browser');
+      return;
+    }
+    getDevices();
+    setOpen(true);
+  }
 
   const handleClose = () => {
     setOpen(false);
@@ -74,7 +78,7 @@ const MicrophoneDialog: React.FC<MicrophoneDialogProps> = () => {
                 ))}
             </Select>
           </FormControl>
-          <TestMicrophone mediaRecorder={mediaRecorder} />
+          {mediaRecorder && <TestMicrophone mediaRecorder={mediaRecorder} />}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Close</Button>

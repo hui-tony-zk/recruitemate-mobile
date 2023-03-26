@@ -1,3 +1,4 @@
+import { Socket } from "dgram";
 import { useState, useEffect, useRef } from "react";
 
 const TranscribeAudio = ({ }) => {
@@ -79,34 +80,8 @@ const TranscribeAudio = ({ }) => {
 
         const question = "Tell me about yourself"; // default question
 
-        const socket = new WebSocket(`ws://127.0.0.1:8000/practice?question=${question}`);
-        setSocket(socket);
-
-        socket.onopen = () => {
-            console.log({ event: "onopen" });
-            document.querySelector("#status").textContent = "Connected";
-        };
-
-        socket.onclose = () => {
-            console.log({ event: "onclose" });
-        };
-
-        socket.onerror = (error) => {
-            console.log({ event: "onerror", error });
-        };
-
-        socket.onmessage = async (event) => {
-            console.log({ event: "onmessage", data: event.data });
-
-            const jsonData = JSON.parse(event.data);
-
-            if (jsonData.hasOwnProperty("audio_data")) { // this is AI voice
-                handleAudioData(event.data);
-            } else if (jsonData.hasOwnProperty("user_text")) { // this is AI text
-                console.log(event.data)
-                handleUserTextData(event.data);
-            }
-        };
+        const createdSocket = createSocket(question, setSocket, handleAudioData, handleUserTextData);
+        setSocket(createSocket)
 
         navigator.mediaDevices
             .getUserMedia({
@@ -162,3 +137,34 @@ const TranscribeAudio = ({ }) => {
 };
 
 export default TranscribeAudio;
+
+function createSocket(question: string, handleAudioData: (jsonData: string) => void, handleUserTextData: (jsonData: string) => Socket) {
+    const socket = new WebSocket(`ws://127.0.0.1:8000/practice?question=${question}`);
+
+    socket.onopen = () => {
+        console.log({ event: "onopen" });
+    };
+
+    socket.onclose = () => {
+        console.log({ event: "onclose" });
+    };
+
+    socket.onerror = (error) => {
+        console.log({ event: "onerror", error });
+    };
+
+    socket.onmessage = async (event) => {
+        console.log({ event: "onmessage", data: event.data });
+
+        const jsonData = JSON.parse(event.data);
+
+        if (jsonData.hasOwnProperty("audio_data")) { // this is AI voice
+            handleAudioData(event.data);
+        } else if (jsonData.hasOwnProperty("user_text")) { // this is AI text
+            console.log(event.data);
+            handleUserTextData(event.data);
+        }
+    };
+
+    return socket
+}
