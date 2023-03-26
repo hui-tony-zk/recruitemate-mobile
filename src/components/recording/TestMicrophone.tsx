@@ -13,7 +13,6 @@ const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
     const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
     const recordingRef = useRef<boolean>(false);
     const audioChunks = useRef<Blob[]>([]);
-    const streamRef = useRef<MediaStream | null>(null);
 
     useEffect(() => {
         const handleDataAvailable = (event: BlobEvent) => {
@@ -39,7 +38,6 @@ const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
         const newAudioContext = new AudioContext();
         setAudioContext(newAudioContext);
         const stream = mediaRecorder.stream;
-        streamRef.current = stream;
         const source = newAudioContext.createMediaStreamSource(stream);
         const analyser = newAudioContext.createAnalyser();
         source.connect(analyser);
@@ -65,7 +63,6 @@ const TestMicrophone: React.FC<TestMicrophoneProps> = ({ mediaRecorder }) => {
         setAudioVolume(0);
         mediaRecorder.stop();
         audioContext && audioContext.close();
-        streamRef && streamRef.current && streamRef.current.getTracks().forEach((track) => track.stop());
         replayAudio();
     };
 
